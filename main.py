@@ -6,10 +6,10 @@ currentWorkingDirectory = r"D:\learning\berlingeoeheatmap_project1-main"
 import os
 print("Current working directory\n" + os.getcwd())
 
-import pandas                        as pd
-from core import methods             as m1
-from core import HelperTools         as ht
-from config                          import pdict
+import pandas as pd
+from core import methods as m1
+from core import HelperTools as ht
+from config import pdict
 
 # -----------------------------------------------------------------------------
 @ht.timer
