@@ -13,73 +13,57 @@ from config import pdict
 
 # -----------------------------------------------------------------------------
 @ht.timer
-def main() -> None:
-    """Main entry point for the Streamlit app.
+def main():
+    """Main: Generation of Streamlit App for visualizing electric charging stations & residents in Berlin"""
 
-    The app visualizes:
-    - Number of residents per postal code (PLZ) in Berlin
-    - Number of public charging points per postal code in Berlin
-    """
-
-    # ------------------------------------------------------------------
-    # 1) Load base geodata for Berlin postal codes (PLZ polygons)
-    # ------------------------------------------------------------------
+    # ---------- 1) PLZ geodata ----------
     path_geodat_plz = os.path.join("datasets", "geodata_berlin_plz.csv")
     df_geodat_plz = pd.read_csv(path_geodat_plz, sep=";")
 
-    # ------------------------------------------------------------------
-    # 2) Load and preprocess charging station register
-    #    Source: Bundesnetzagentur - "List of charging stations (CSV)"
-    # ------------------------------------------------------------------
+    # ---------- 2) Ladesäulen (charging stations) ----------
     path_lstat = os.path.join("datasets", "ladesaeulenregister.csv")
-
-    # The file is semicolon-separated, encoded in latin1 and contains
-    # about 10 lines of metadata before the header row.
     df_lstat = pd.read_csv(
         path_lstat,
         sep=";",
         encoding="latin1",
-        skiprows=10,
+        skiprows=10        # উপরের ১০টা meta লাইন বাদ
     )
 
-    # Preprocess charging station data and aggregate by PLZ
     df_lstat2 = m1.preprop_lstat(df_lstat, df_geodat_plz, pdict)
     gdf_lstat3 = m1.count_plz_occurrences(df_lstat2)
 
-    # ------------------------------------------------------------------
-    # 3) Load and preprocess residents per PLZ (population data)
-    # ------------------------------------------------------------------
+    # ---------- 3) Residents (plz_einwohner.csv) ----------
     path_residents = os.path.join("datasets", "plz_einwohner.csv")
 
-    # Let pandas automatically detect the separator (comma or semicolon)
+    # sep=None + engine="python" --> delimiter নিজে detect করবে
     df_residents = pd.read_csv(path_residents, sep=None, engine="python")
 
-    # Normalize column names to what preprop_resid expects
-    # Expected columns: 'plz', 'einwohner', 'lat', 'lon'
+    # কলাম নামগুলো methods.py যেভাবে expect করে, সেভাবে normalize করি
+    # (সব lowercase, আগে/পরে space কেটে)
     df_residents.columns = [c.strip().lower() for c in df_residents.columns]
+    # এখন কলামগুলো হওয়া উচিত: ['plz','note','einwohner','qkm','lat','lon']
 
+    # শুধু safety হিসেবে check করে নেই – যদি 'plz','einwohner','lat','lon'
+    # অন্য case-এ থাকে, তবু rename করে ঠিক করে দিচ্ছি
     rename_map = {}
     for col in df_residents.columns:
         if col.lower() == "plz":
             rename_map[col] = "plz"
-        elif col.lower() == "einwohner":
+        if col.lower() == "einwohner":
             rename_map[col] = "einwohner"
-        elif col.lower() == "lat":
+        if col.lower() == "lat":
             rename_map[col] = "lat"
-        elif col.lower() == "lon":
+        if col.lower() == "lon":
             rename_map[col] = "lon"
+    df_residents = df_residents.rename(columns=rename_map)
 
-    if rename_map:
-        df_residents = df_residents.rename(columns=rename_map)
-
-    # Preprocess residents data and attach PLZ geometry
+    # এখন df_residents এ methods.py এর preprop_resid ঠিক যেভাবে চায় সেই
+    # কলামগুলো থাকছে: 'plz','einwohner','lat','lon'
     gdf_residents2 = m1.preprop_resid(df_residents, df_geodat_plz, pdict)
 
-    # ------------------------------------------------------------------
-    # 4) Build and display the Streamlit heatmap app
-    # ------------------------------------------------------------------
+    # ---------- 4) Streamlit app ----------
     m1.make_streamlit_electric_Charging_resid(gdf_lstat3, gdf_residents2)
-    
+
 # -----------------------------------------------------------------------------------------------------------------------
 
 
