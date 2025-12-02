@@ -135,78 +135,77 @@ def preprop_resid(dfr, dfg, pdict):
 
 
 # -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 @ht.timer
 def make_streamlit_electric_Charging_resid(dfr1, dfr2):
     """Makes Streamlit App with Heatmap of Electric Charging Stations and Residents"""
-    
+
     dframe1 = dfr1.copy()
     dframe2 = dfr2.copy()
 
+    # Streamlit app title
+    st.title("Heatmaps: Electric Charging Stations and Residents")
 
-    # Streamlit app
-    st.title('Heatmaps: Electric Charging Stations and Residents')
-
-    # Create a radio button for layer selection
-    # layer_selection = st.radio("Select Layer", ("Number of Residents per PLZ (Postal code)", "Number of Charging Stations per PLZ (Postal code)"))
-
+    # Choose which layer to display
     layer_selection = st.radio("Select Layer", ("Residents", "Charging_Stations"))
 
     # Create a Folium map
     m = folium.Map(location=[52.52, 13.40], zoom_start=10)
 
+    # -------------------
+    # Residents Layer
+    # -------------------
     if layer_selection == "Residents":
-        
-        # Create a color map for Residents
-        color_map = LinearColormap(colors=['yellow', 'red'], vmin=dframe2['Einwohner'].min(), vmax=dframe2['Einwohner'].max())
 
-        # Add polygons to the map for Residents
-        for idx, row in dframe2.iterrows():
+        # Color scale (yellow → red)
+        color_map = LinearColormap(
+            colors=["yellow", "red"],
+            vmin=dframe2["Einwohner"].min(),
+            vmax=dframe2["Einwohner"].max()
+        )
+
+        # Draw polygons for Residents
+        for _, row in dframe2.iterrows():
             folium.GeoJson(
-                row['geometry'],
-                style_function=lambda x, color=color_map(row['Einwohner']): {
-                    'fillColor': color,
-                    'color': 'black',
-                    'weight': 1,
-                    'fillOpacity': 0.7
+                row["geometry"],
+                style_function=lambda feature, value=row["Einwohner"]: {
+                    "fillColor": color_map(value),
+                    "color": "black",
+                    "weight": 1,
+                    "fillOpacity": 0.7
                 },
                 tooltip=f"PLZ: {row['PLZ']}, Einwohner: {row['Einwohner']}"
             ).add_to(m)
-        
-        # Display the dataframe for Residents
-        # st.subheader('Residents Data')
-        # st.dataframe(gdf_residents2)
 
+    # -------------------
+    # Charging Stations Layer
+    # -------------------
     else:
-        # Create a color map for Numbers
 
-        color_map = LinearColormap(colors=['yellow', 'red'], vmin=dframe1['Number'].min(), vmax=dframe1['Number'].max())
+        color_map = LinearColormap(
+            colors=["yellow", "red"],
+            vmin=dframe1["Number"].min(),
+            vmax=dframe1["Number"].max()
+        )
 
-    # Add polygons to the map for Numbers
-        for idx, row in dframe1.iterrows():
+        # Draw polygons for charging stations
+        for _, row in dframe1.iterrows():
             folium.GeoJson(
-                row['geometry'],
-                style_function=lambda x, color=color_map(row['Number']): {
-                    'fillColor': color,
-                    'color': 'black',
-                    'weight': 1,
-                    'fillOpacity': 0.7
+                row["geometry"],
+                style_function=lambda feature, value=row["Number"]: {
+                    "fillColor": color_map(value),
+                    "color": "black",
+                    "weight": 1,
+                    "fillOpacity": 0.7
                 },
                 tooltip=f"PLZ: {row['PLZ']}, Number: {row['Number']}"
             ).add_to(m)
 
-        # Display the dataframe for Numbers
-        # st.subheader('Numbers Data')
-        # st.dataframe(gdf_lstat3)
-
-    # Add color map to the map
+    # Add color legend
     color_map.add_to(m)
-    
+
+    # Show map in Streamlit
     folium_static(m, width=800, height=600)
-    
-    
-
-
-
 
 
 
