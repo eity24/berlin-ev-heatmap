@@ -1,39 +1,46 @@
-
-currentWorkingDirectory = r"D:\learning\berlingeoeheatmap_project1-main"
-#currentWorkingDirectory = "/mount/src/berlingeoheatmap1/"
-
 # -----------------------------------------------------------------------------
+# Main script for Streamlit app
+# -----------------------------------------------------------------------------
+
 import os
-print("Current working directory\n" + os.getcwd())
 
 import pandas as pd
 from core import methods as m1
 from core import HelperTools as ht
 from config import pdict
 
+# লোকাল আর Streamlit Cloud – দুই জায়গায় কাজ করার জন্য base directory
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+print("Current working directory\n" + BASE_DIR)
+
+
 # -----------------------------------------------------------------------------
 @ht.timer
-def main():
+def main() -> None:
     """Main: Generation of Streamlit App for visualizing electric charging stations & residents in Berlin"""
 
     # ---------- 1) PLZ geodata ----------
-    path_geodat_plz = os.path.join("datasets", "geodata_berlin_plz.csv")
+    # datasets/geodata_berlin_plz.csv
+    path_geodat_plz = os.path.join(BASE_DIR, "datasets", "geodata_berlin_plz.csv")
     df_geodat_plz = pd.read_csv(path_geodat_plz, sep=";")
 
     # ---------- 2) Ladesäulen (charging stations) ----------
-    path_lstat = os.path.join("datasets", "ladesaeulenregister.csv")
+    # খেয়াল করো: ফাইলের নাম GitHub-এ যেভাবে আছে ঠিক সেভাবেই (capital L)
+    # datasets/Ladesaeulenregister.csv
+    path_lstat = os.path.join(BASE_DIR, "datasets", "Ladesaeulenregister.csv")
     df_lstat = pd.read_csv(
         path_lstat,
         sep=";",
         encoding="latin1",
-        skiprows=10        # উপরের ১০টা meta লাইন বাদ
+        skiprows=10,        # উপরের ১০টা meta লাইন বাদ
     )
 
     df_lstat2 = m1.preprop_lstat(df_lstat, df_geodat_plz, pdict)
     gdf_lstat3 = m1.count_plz_occurrences(df_lstat2)
 
     # ---------- 3) Residents (plz_einwohner.csv) ----------
-    path_residents = os.path.join("datasets", "plz_einwohner.csv")
+    # datasets/plz_einwohner.csv
+    path_residents = os.path.join(BASE_DIR, "datasets", "plz_einwohner.csv")
 
     # sep=None + engine="python" --> delimiter নিজে detect করবে
     df_residents = pd.read_csv(path_residents, sep=None, engine="python")
@@ -64,10 +71,8 @@ def main():
     # ---------- 4) Streamlit app ----------
     m1.make_streamlit_electric_Charging_resid(gdf_lstat3, gdf_residents2)
 
-# -----------------------------------------------------------------------------------------------------------------------
 
+# -----------------------------------------------------------------------------
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     main()
-    
-
